@@ -1,4 +1,7 @@
+using System.Text.Json;
 using CarManager.Services;
+using CarManager.Services.Abstractions;
+using CarManager.Services.MapperProfiles;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Fluent;
 
@@ -8,20 +11,35 @@ public static class StartupExtensions
 {
     public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
     {
+        builder.Services.Configure<Configuration.Azure>(builder.Configuration.GetRequiredSection("Azure"));
+        
         builder.Services.AddControllersWithViews();
+        
+        builder.Services.AddSingleton<JsonSerializerOptions>(_ => new JsonSerializerOptions
+            { WriteIndented = false, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        
+        builder.Services.AddSingleton<CosmosSerializationOptions>(_ => new CosmosSerializationOptions
+            { Indented = false, PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase });
 
-        builder.Services.AddSingleton<CosmosClient>(_ =>
+        builder.Services.AddSingleton<CosmosClient>(serviceProvider =>
         {
             var connectionString = builder.Configuration.GetConnectionString("CosmosAccount") ??
-                                   throw new InvalidOperationException("\"CosmosAccount\" connection string is not provided.");
-            
-            var cosmosClientBuilder = new CosmosClientBuilder(connectionString).WithSerializerOptions(
-                new CosmosSerializationOptions { PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase });
+                                   throw new InvalidOperationException("'CosmosAccount' connection string is not provided.");
+
+            var serializerOptions = serviceProvider.GetRequiredService<CosmosSerializationOptions>();
+            var cosmosClientBuilder = new CosmosClientBuilder(connectionString).WithSerializerOptions(serializerOptions);
 
             return cosmosClientBuilder.Build();
         });
 
         builder.Services.AddSingleton<CosmosAccountClient>();
+
+        builder.Services.AddTransient<IIdentifierGenerator, GuidIdentifierGenerator>();
+
+        builder.Services.AddAutoMapper(profiles =>
+        {
+            profiles.AddProfile<CarMapperProfile>();
+        });
 
         return builder;
     }
