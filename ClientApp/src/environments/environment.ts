@@ -3,7 +3,12 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  carApi: {
+    host: 'localhost',
+    port: '7173',
+    route: 'api/Car'
+  },
 };
 
 /*
