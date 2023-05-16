@@ -1,4 +1,5 @@
 using System.Text.Json;
+using CarManager.Models;
 using CarManager.Services;
 using CarManager.Services.Abstractions;
 using CarManager.Services.MapperProfiles;
@@ -12,12 +13,12 @@ public static class StartupExtensions
     public static WebApplicationBuilder ConfigureServices(this WebApplicationBuilder builder)
     {
         builder.Services.Configure<Configuration.Azure>(builder.Configuration.GetRequiredSection("Azure"));
-        
+
         builder.Services.AddControllersWithViews();
-        
+
         builder.Services.AddSingleton<JsonSerializerOptions>(_ => new JsonSerializerOptions
             { WriteIndented = false, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        
+
         builder.Services.AddSingleton<CosmosSerializationOptions>(_ => new CosmosSerializationOptions
             { Indented = false, PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase });
 
@@ -32,14 +33,23 @@ public static class StartupExtensions
             return cosmosClientBuilder.Build();
         });
 
-        builder.Services.AddSingleton<CosmosAccountClient>();
-
         builder.Services.AddTransient<IIdentifierGenerator, GuidIdentifierGenerator>();
+        builder.Services.AddSingleton<CosmosAccountClient>();
+        builder.Services.AddTransient<IRepository<Car, string>, CosmosCarRepository>();
 
-        builder.Services.AddAutoMapper(profiles =>
+        builder.Services.AddAutoMapper(profiles => { profiles.AddProfile<CarMapperProfile>(); });
+
+        builder.Services.AddCors(options =>
         {
-            profiles.AddProfile<CarMapperProfile>();
+            options.AddDefaultPolicy(policyBuilder =>
+            {
+                policyBuilder.WithOrigins("https://localhost:44495")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
         });
+
 
         return builder;
     }
@@ -57,10 +67,9 @@ public static class StartupExtensions
         app.UseStaticFiles();
         app.UseRouting();
 
+        app.UseCors();
 
-        app.MapControllerRoute(
-            name: "default",
-            pattern: "{controller}/{action=Index}/{id?}");
+        app.MapControllers();
 
         app.MapFallbackToFile("index.html");
     }
