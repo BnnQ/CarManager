@@ -19,5 +19,5 @@ public class CarsDatabase
 public class CarsContainer
 {
     public string? Id { get; set; }
-    public string? PartitionKeyValue { get; set; }
+    public string? PartitionKeyPath { get; set; }
 }
