@@ -1,0 +1,55 @@
+<div id="body" class="container pt-2">
+  <div class="row">
+    <a
+      title="Create button"
+      routerLink="cars/create"
+      class="btn btn-success flex-grow-1"
+      >Create New</a
+    >
+  </div>
+  <div class="row">
+    <table class="table flex-grow-1 flex-shrink-0">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Model</th>
+          <th>Manufacturer</th>
+          <th>Price</th>
+          <th>Year</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody *ngIf="cars !== undefined">
+        <tr *ngFor="let car of cars">
+          <td>{{ car.id }}</td>
+          <td>{{ car.model }}</td>
+          <td>{{ car.manufacturer }}</td>
+          <td>{{ car.price }}</td>
+          <td>{{ car.year }}</td>
+          <td>
+            <ul class="list-inline m-0">
+              <li class="list-inline-item">
+                <a
+                  [routerLink]="['cars/edit', car.id]"
+                  title="Edit button"
+                  class="btn btn-outline-warning btn-sm rounded-0"
+                >
+                  <fa-icon [icon]="faPenSquare"></fa-icon>
+                </a>
+              </li>
+              <li class="list-inline-item">
+                <a
+                  [routerLink]="['cars/delete', car.id]"
+                  title="Delete button"
+                  class="btn btn-outline-danger btn-sm rounded-0"
+                >
+                  <fa-icon [icon]="faTrashCan"></fa-icon>
+                </a>
+              </li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
